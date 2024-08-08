@@ -111,8 +111,8 @@ if st.session_state.step == 1:
     available_roles = list(data.keys())
     selected_roles = st.multiselect("Choose roles to include", available_roles, default=st.session_state.selected_roles)
 
-    # Ensure the session state updates immediately after selection
-    if set(selected_roles) != set(st.session_state.selected_roles):
+    # Update session state immediately after selection
+    if selected_roles != st.session_state.selected_roles:
         st.session_state.selected_roles = selected_roles
         # Initialize role data if not already done
         for role in selected_roles:
@@ -128,8 +128,11 @@ elif st.session_state.step == 2:
     valid_time_allocation = True
     for role in st.session_state.selected_roles:
         st.subheader(role)
-        st.session_state.role_data[role]['salary'] = st.number_input(
+        salary = st.number_input(
             "Salary (€)", value=st.session_state.role_data[role]['salary'], key=f"{role}-salary")
+
+        if salary != st.session_state.role_data[role]['salary']:
+            st.session_state.role_data[role]['salary'] = salary
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
@@ -138,12 +141,16 @@ elif st.session_state.step == 2:
                 st.markdown(f"**{task['sub_task']}**")
                 st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
             with cols[1]:
-                task["time_allocation"] = st.number_input(
+                time_allocation = st.number_input(
                     "Time allocation (%)", value=task["time_allocation"], min_value=0, max_value=100, key=f"{role}-{idx}-time_allocation", format="%d")
-                total_time_allocation += task["time_allocation"]
+                total_time_allocation += time_allocation
+                if time_allocation != task["time_allocation"]:
+                    task["time_allocation"] = time_allocation
             with cols[2]:
-                task["ai_impact"] = st.number_input(
+                ai_impact = st.number_input(
                     "AI Impact Score", value=task["ai_impact"], min_value=0, max_value=10, key=f"{role}-{idx}-ai_impact", format="%d")
+                if ai_impact != task["ai_impact"]:
+                    task["ai_impact"] = ai_impact
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
         
@@ -191,15 +198,14 @@ elif st.session_state.step == 3:
         styled_df = df.style.hide(axis='index').set_table_styles(
             {
                 "Description": [
-                    {'selector': 'th', 'props': [("text-align", "center"), ("width", "250px")],
-                     },
+                    {'selector': 'th', 'props': [("text-align", "center"), ("width", "250px")]},
                     {'selector': 'td', 'props': [("text-align", "center"), ("width", "250px"), ("word-wrap", "break-word")]}
                 ],
                 "Time Allocation (%)": [
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
-                "AI Impact (0-10)": [
+                "AI Impact": [
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
