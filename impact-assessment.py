@@ -71,8 +71,6 @@ data = {
 # Initialize session state
 if 'step' not in st.session_state:
     st.session_state.step = 1
-if 'available_roles' not in st.session_state:
-    st.session_state.available_roles = list(data.keys())
 if 'selected_roles' not in st.session_state:
     st.session_state.selected_roles = []
 if 'role_data' not in st.session_state:
@@ -97,17 +95,6 @@ if st.session_state.step == 3:
     if st.sidebar.button("Step 3: Summary"):
         go_to_step(3)
 
-def update_roles(add_role=None, remove_role=None):
-    if add_role:
-        st.session_state.selected_roles.append(add_role)
-        st.session_state.available_roles.remove(add_role)
-        st.session_state.role_data[add_role] = data[add_role]
-
-    if remove_role:
-        st.session_state.available_roles.append(remove_role)
-        st.session_state.selected_roles.remove(remove_role)
-        del st.session_state.role_data[remove_role]
-
 # Step text
 def step_text():
     if st.session_state.step == 1:
@@ -121,25 +108,18 @@ def step_text():
 if st.session_state.step == 1:
     st.title(step_text())
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("Available Roles")
-        role_to_add = st.selectbox('Select a role to add', [''] + st.session_state.available_roles)
+    available_roles = list(data.keys())
+    selected_roles = st.multiselect("Choose roles to include", available_roles, st.session_state.selected_roles)
 
-    with col2:
-        st.subheader("Selected Roles")
-        role_to_remove = st.selectbox('Select a role to remove', [''] + st.session_state.selected_roles)
+    # Ensure the session state updates immediately after selection
+    if set(selected_roles) != set(st.session_state.selected_roles):
+        st.session_state.selected_roles = selected_roles
+        # Initialize role data if not already done
+        for role in selected_roles:
+            if role not in st.session_state.role_data:
+                st.session_state.role_data[role] = data[role]
 
-    if st.button("Add Role") and role_to_add:
-        update_roles(add_role=role_to_add)
-        st.experimental_rerun()
-
-    if st.button("Remove Role") and role_to_remove:
-        update_roles(remove_role=role_to_remove)
-        st.experimental_rerun()
-
-    if st.button("Next"):
-        go_to_step(2)
+    st.button("Next", on_click=lambda: go_to_step(2))
 
 # Step 2: Verify Data
 elif st.session_state.step == 2:
@@ -148,17 +128,18 @@ elif st.session_state.step == 2:
     valid_time_allocation = True
     for role in st.session_state.selected_roles:
         st.subheader(role)
-        salary_str = st.text_input("Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
+        salary_str = st.text_input(
+            "Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
 
         if salary_str != str(st.session_state.role_data[role]['salary']):
             try:
                 st.session_state.role_data[role]['salary'] = int(salary_str)
             except ValueError:
-                st.error(f"Please enter a valid salary amount for {role}")
+                st.error("Please enter a valid salary amount")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
-            cols = st.columns([1, 0.6, 0.6], gap="small")  # Adjust the layout
+            cols = st.columns([1, 0.6, 0.6])  # Adjust the layout
             with cols[0]:
                 st.markdown(f"**{task['sub_task']}**")
                 st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
@@ -192,10 +173,8 @@ elif st.session_state.step == 2:
     if not valid_time_allocation:
         st.error("Total time allocation for each role must be 100%.")
 
-    st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
-
     # Correctly define and use the columns for navigation buttons
-    col1, col2, col3 = st.columns([6, 1, 1])
+    col1, col2, col3 = st.columns([7, 1, 1])
     with col2:
         st.button("Back", on_click=lambda: go_to_step(1))
     with col3:
@@ -247,6 +226,6 @@ elif st.session_state.step == 3:
         
         st.dataframe(styled_df)
 
-    col1, col2, col3 = st.columns([6, 1, 1])
+    col1, col2, col3 = st.columns([7, 1, 1])
     with col2:
         st.button("Back", on_click=lambda: go_to_step(2))
