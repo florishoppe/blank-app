@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import openai
 
 # Sample data with descriptions and salaries
 data = {
@@ -75,6 +76,8 @@ if 'selected_roles' not in st.session_state:
     st.session_state.selected_roles = []
 if 'role_data' not in st.session_state:
     st.session_state.role_data = {}
+if 'summary' not in st.session_state:
+    st.session_state.summary = ""
 
 def go_to_step(step):
     st.session_state.step = step
@@ -103,6 +106,25 @@ def step_text():
         return "Step 2. Verify Role Details"
     elif st.session_state.step == 3:
         return "Step 3. Summary"
+
+def get_summary(role_data):
+    role_summary = []
+    for role in role_data.keys():
+        role_details = role_data[role]
+        summary = f"Role: {role}\nSalary: €{role_details['salary']:.2f}\n"
+        for task in role_details['tasks']:
+            summary += f"Sub-task: {task['sub_task']}\nDescription: {task['description']}\nTime Allocation: {task['time_allocation']}%\nAI Impact: {task['ai_impact']}\n\n"
+        role_summary.append(summary)
+    
+    full_text = "\n".join(role_summary)
+    
+    openai.api_key = "<YOUR_API_KEY>"
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"Summarize the following job roles and tasks:\n\n{full_text}",
+        max_tokens=500
+    )
+    return response.choices[0].text.strip()
 
 # Step 1: Select Roles
 if st.session_state.step == 1:
@@ -191,17 +213,13 @@ elif st.session_state.step == 3:
         styled_df = df.style.hide(axis='index').set_table_styles(
             {
                 "Description": [
-                    {'selector': 'th', 'props': [("text-align", "center"), ("width", "250px")],
-                     },
-                    {'selector': 'td', 'props': [("text-align", "center"), ("width", "250px"), ("word-wrap", "break-word")]}
+                    {'selector': 'th', 'props': [("text-align", "center"), ("width", "250px")]}
                 ],
                 "Time Allocation (%)": [
-                    {'selector': 'th', 'props': [("text-align", "center")]},
-                    {'selector': 'td', 'props': [("text-align", "center")]}
+                    {'selector': 'th', 'props': [("text-align", "center")]}
                 ],
-                "AI Impact (0-10)": [
-                    {'selector': 'th', 'props': [("text-align", "center")]},
-                    {'selector': 'td', 'props': [("text-align", "center")]}
+                "AI Impact": [
+                    {'selector': 'th', 'props': [("text-align", "center")]}
                 ],
                 None: [
                     {'selector': 'th.col_heading', 'props': [("text-align", "center")]}
@@ -214,3 +232,10 @@ elif st.session_state.step == 3:
     col1, col2, col3 = st.columns([6, 1, 1])
     with col2:
         st.button("Back", on_click=lambda: go_to_step(2))
+
+    if st.button("Generate Summary"):
+        st.session_state.summary = get_summary(st.session_state.role_data)
+    
+    if st.session_state.summary:
+        st.subheader("Generated Summary")
+        st.write(st.session_state.summary)
