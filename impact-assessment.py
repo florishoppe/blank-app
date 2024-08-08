@@ -81,7 +81,7 @@ def go_to_step(step):
 
 # Breadcrumb-like Navigation
 st.sidebar.title("Navigation")
-st.sidebar.write(" ")
+st.sidebar.write("")
 
 if st.session_state.step >= 1:
     if st.sidebar.button("Step 1: Select Roles"):
@@ -128,11 +128,14 @@ elif st.session_state.step == 2:
     valid_time_allocation = True
     for role in st.session_state.selected_roles:
         st.subheader(role)
-        salary = st.number_input(
-            "Salary (€)", value=st.session_state.role_data[role]['salary'], key=f"{role}-salary")
+        salary_str = st.text_input(
+            "Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
 
-        if salary != st.session_state.role_data[role]['salary']:
-            st.session_state.role_data[role]['salary'] = salary
+        if salary_str != str(st.session_state.role_data[role]['salary']):
+            try:
+                st.session_state.role_data[role]['salary'] = int(salary_str)
+            except ValueError:
+                st.error("Please enter a valid salary amount")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
@@ -141,16 +144,24 @@ elif st.session_state.step == 2:
                 st.markdown(f"**{task['sub_task']}**")
                 st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
             with cols[1]:
-                time_allocation = st.number_input(
-                    "Time allocation (%)", value=task["time_allocation"], min_value=0, max_value=100, key=f"{role}-{idx}-time_allocation", format="%d")
-                total_time_allocation += time_allocation
-                if time_allocation != task["time_allocation"]:
-                    task["time_allocation"] = time_allocation
+                time_allocation_str = st.text_input(
+                    "Time allocation (%)", value=str(task["time_allocation"]), key=f"{role}-{idx}-time_allocation")
+                try:
+                    time_allocation = int(time_allocation_str)
+                    total_time_allocation += time_allocation
+                    if time_allocation != task["time_allocation"]:
+                        task["time_allocation"] = time_allocation
+                except ValueError:
+                    st.error("Please enter a valid time allocation percentage")
             with cols[2]:
-                ai_impact = st.number_input(
-                    "AI Impact Score", value=task["ai_impact"], min_value=0, max_value=10, key=f"{role}-{idx}-ai_impact", format="%d")
-                if ai_impact != task["ai_impact"]:
-                    task["ai_impact"] = ai_impact
+                ai_impact_str = st.text_input(
+                    "AI Impact Score", value=str(task["ai_impact"]), key=f"{role}-{idx}-ai_impact")
+                try:
+                    ai_impact = int(ai_impact_str)
+                    if ai_impact != task["ai_impact"]:
+                        task["ai_impact"] = ai_impact
+                except ValueError:
+                    st.error("Please enter a valid AI impact score")
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
         
@@ -179,7 +190,7 @@ elif st.session_state.step == 3:
     for role in st.session_state.role_data.keys():
         st.subheader(role)
         salary = int(st.session_state.role_data[role]['salary'])
-        st.markdown(f"**Salary**: €{salary:,.2f}")
+        st.markdown(f"**Salary**: €{salary:.2f}")
 
         table_data = {
             "Description": [],
