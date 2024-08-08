@@ -72,7 +72,7 @@ data = {
 if 'step' not in st.session_state:
     st.session_state.step = 1
 if 'selected_roles' not in st.session_state:
-    st.session_state.selected_roles = []
+    st.session_state.selected_roles = set()
 if 'role_data' not in st.session_state:
     st.session_state.role_data = {}
 
@@ -109,15 +109,16 @@ if st.session_state.step == 1:
     st.title(step_text())
 
     available_roles = list(data.keys())
-    selected_roles = st.multiselect("Choose roles to include", available_roles, default=st.session_state.selected_roles)
+    for role in available_roles:
+        if st.checkbox(role, value=role in st.session_state.selected_roles):
+            st.session_state.selected_roles.add(role)
+        else:
+            st.session_state.selected_roles.discard(role)
 
-    # Update session state immediately after selection
-    if selected_roles != st.session_state.selected_roles:
-        st.session_state.selected_roles = selected_roles
-        # Initialize role data if not already done
-        for role in selected_roles:
-            if role not in st.session_state.role_data:
-                st.session_state.role_data[role] = data[role]
+    # Initialize role data if not already done
+    for role in st.session_state.selected_roles:
+        if role not in st.session_state.role_data:
+            st.session_state.role_data[role] = data[role]
 
     st.button("Next", on_click=lambda: go_to_step(2))
 
@@ -128,14 +129,12 @@ elif st.session_state.step == 2:
     valid_time_allocation = True
     for role in st.session_state.selected_roles:
         st.subheader(role)
-        salary_str = st.text_input(
-            "Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
+        salary_str = st.text_input("Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
 
-        if salary_str != str(st.session_state.role_data[role]['salary']):
-            try:
-                st.session_state.role_data[role]['salary'] = int(salary_str)
-            except ValueError:
-                st.error("Please enter a valid salary amount")
+        try:
+            st.session_state.role_data[role]['salary'] = int(salary_str)
+        except ValueError:
+            st.error("Invalid input for salary")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
@@ -149,19 +148,16 @@ elif st.session_state.step == 2:
                 try:
                     time_allocation = int(time_allocation_str)
                     total_time_allocation += time_allocation
-                    if time_allocation != task["time_allocation"]:
-                        task["time_allocation"] = time_allocation
+                    task["time_allocation"] = time_allocation
                 except ValueError:
-                    st.error("Please enter a valid time allocation percentage")
+                    st.error("Invalid input for time allocation")
             with cols[2]:
                 ai_impact_str = st.text_input(
                     "AI Impact Score", value=str(task["ai_impact"]), key=f"{role}-{idx}-ai_impact")
                 try:
-                    ai_impact = int(ai_impact_str)
-                    if ai_impact != task["ai_impact"]:
-                        task["ai_impact"] = ai_impact
+                    task["ai_impact"] = int(ai_impact_str)
                 except ValueError:
-                    st.error("Please enter a valid AI impact score")
+                    st.error("Invalid input for AI impact")
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
         
