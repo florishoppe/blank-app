@@ -71,6 +71,8 @@ data = {
 # Initialize session state
 if 'step' not in st.session_state:
     st.session_state.step = 1
+if 'available_roles' not in st.session_state:
+    st.session_state.available_roles = list(data.keys())
 if 'selected_roles' not in st.session_state:
     st.session_state.selected_roles = []
 if 'role_data' not in st.session_state:
@@ -95,6 +97,17 @@ if st.session_state.step == 3:
     if st.sidebar.button("Step 3: Summary"):
         go_to_step(3)
 
+def update_roles(add_role=None, remove_role=None):
+    if add_role:
+        st.session_state.selected_roles.append(add_role)
+        st.session_state.available_roles.remove(add_role)
+        st.session_state.role_data[add_role] = data[add_role]
+
+    if remove_role:
+        st.session_state.available_roles.append(remove_role)
+        st.session_state.selected_roles.remove(remove_role)
+        del st.session_state.role_data[remove_role]
+
 # Step text
 def step_text():
     if st.session_state.step == 1:
@@ -108,29 +121,22 @@ def step_text():
 if st.session_state.step == 1:
     st.title(step_text())
 
-    available_roles = [role for role in data.keys() if role not in st.session_state.selected_roles]
-    selected_roles = st.session_state.selected_roles
-
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2 = st.columns(2)
     with col1:
         st.subheader("Available Roles")
-        role_to_add = st.selectbox('Select a role to add', [''] + available_roles)
-        if role_to_add:
-            selected_roles.append(role_to_add)
-            st.session_state.selected_roles = selected_roles
-            st.experimental_rerun()
+        role_to_add = st.selectbox('Select a role to add', [''] + st.session_state.available_roles)
 
     with col2:
         st.subheader("Selected Roles")
-        role_to_remove = st.selectbox('Select a role to remove', [''] + selected_roles)
-        if role_to_remove:
-            selected_roles.remove(role_to_remove)
-            st.session_state.selected_roles = selected_roles
-            st.experimental_rerun()
+        role_to_remove = st.selectbox('Select a role to remove', [''] + st.session_state.selected_roles)
 
-    for role in st.session_state.selected_roles:
-        if role not in st.session_state.role_data:
-            st.session_state.role_data[role] = data[role]
+    if st.button("Add Role") and role_to_add:
+        update_roles(add_role=role_to_add)
+        st.experimental_rerun()
+
+    if st.button("Remove Role") and role_to_remove:
+        update_roles(remove_role=role_to_remove)
+        st.experimental_rerun()
 
     if st.button("Next"):
         go_to_step(2)
@@ -148,7 +154,7 @@ elif st.session_state.step == 2:
             try:
                 st.session_state.role_data[role]['salary'] = int(salary_str)
             except ValueError:
-                st.error("Please enter a valid salary amount")
+                st.error(f"Please enter a valid salary amount for {role}")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
