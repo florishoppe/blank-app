@@ -72,7 +72,7 @@ data = {
 if 'step' not in st.session_state:
     st.session_state.step = 1
 if 'selected_roles' not in st.session_state:
-    st.session_state.selected_roles = set()
+    st.session_state.selected_roles = []
 if 'role_data' not in st.session_state:
     st.session_state.role_data = {}
 
@@ -108,19 +108,32 @@ def step_text():
 if st.session_state.step == 1:
     st.title(step_text())
 
-    available_roles = list(data.keys())
-    for role in available_roles:
-        if st.checkbox(role, value=role in st.session_state.selected_roles):
-            st.session_state.selected_roles.add(role)
-        else:
-            st.session_state.selected_roles.discard(role)
+    available_roles = [role for role in data.keys() if role not in st.session_state.selected_roles]
+    selected_roles = st.session_state.selected_roles
 
-    # Initialize role data if not already done
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        st.subheader("Available Roles")
+        role_to_add = st.selectbox('Select a role to add', [''] + available_roles)
+        if role_to_add:
+            selected_roles.append(role_to_add)
+            st.session_state.selected_roles = selected_roles
+            st.experimental_rerun()
+
+    with col2:
+        st.subheader("Selected Roles")
+        role_to_remove = st.selectbox('Select a role to remove', [''] + selected_roles)
+        if role_to_remove:
+            selected_roles.remove(role_to_remove)
+            st.session_state.selected_roles = selected_roles
+            st.experimental_rerun()
+
     for role in st.session_state.selected_roles:
         if role not in st.session_state.role_data:
             st.session_state.role_data[role] = data[role]
 
-    st.button("Next", on_click=lambda: go_to_step(2))
+    if st.button("Next"):
+        go_to_step(2)
 
 # Step 2: Verify Data
 elif st.session_state.step == 2:
@@ -131,10 +144,11 @@ elif st.session_state.step == 2:
         st.subheader(role)
         salary_str = st.text_input("Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
 
-        try:
-            st.session_state.role_data[role]['salary'] = int(salary_str)
-        except ValueError:
-            st.error("Invalid input for salary")
+        if salary_str != str(st.session_state.role_data[role]['salary']):
+            try:
+                st.session_state.role_data[role]['salary'] = int(salary_str)
+            except ValueError:
+                st.error("Please enter a valid salary amount")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
@@ -148,16 +162,19 @@ elif st.session_state.step == 2:
                 try:
                     time_allocation = int(time_allocation_str)
                     total_time_allocation += time_allocation
-                    task["time_allocation"] = time_allocation
+                    if time_allocation != task["time_allocation"]:
+                        task["time_allocation"] = time_allocation
                 except ValueError:
-                    st.error("Invalid input for time allocation")
+                    st.error("Please enter a valid time allocation percentage")
             with cols[2]:
                 ai_impact_str = st.text_input(
                     "AI Impact Score", value=str(task["ai_impact"]), key=f"{role}-{idx}-ai_impact")
                 try:
-                    task["ai_impact"] = int(ai_impact_str)
+                    ai_impact = int(ai_impact_str)
+                    if ai_impact != task["ai_impact"]:
+                        task["ai_impact"] = ai_impact
                 except ValueError:
-                    st.error("Invalid input for AI impact")
+                    st.error("Please enter a valid AI impact score")
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
         
@@ -186,7 +203,7 @@ elif st.session_state.step == 3:
     for role in st.session_state.role_data.keys():
         st.subheader(role)
         salary = int(st.session_state.role_data[role]['salary'])
-        st.markdown(f"**Salary**: €{salary:.2f}")
+        st.markdown(f"**Salary**: €{salary:,.2f}")
 
         table_data = {
             "Description": [],
