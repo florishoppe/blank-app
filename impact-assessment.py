@@ -88,7 +88,7 @@ if st.session_state.step >= 1:
         go_to_step(1)
 
 if st.session_state.step >= 2:
-    if st.sidebar.button("Step 2: Update Role Data"):
+    if st.sidebar.button("Step 2: Verify Role Details"):
         go_to_step(2)
 
 if st.session_state.step == 3:
@@ -100,7 +100,7 @@ def step_text():
     if st.session_state.step == 1:
         return "Step 1. Select Job Roles"
     elif st.session_state.step == 2:
-        return "Step 2. Update Role Data"
+        return "Step 2. Verify Role Details"
     elif st.session_state.step == 3:
         return "Step 3. Summary"
 
@@ -109,7 +109,7 @@ if st.session_state.step == 1:
     st.title(step_text())
 
     available_roles = list(data.keys())
-    selected_roles = st.multiselect("Choose roles to include", available_roles, st.session_state.selected_roles)
+    selected_roles = st.multiselect("Choose roles to include", available_roles, default=st.session_state.selected_roles)
 
     # Ensure the session state updates immediately after selection
     if set(selected_roles) != set(st.session_state.selected_roles):
@@ -121,28 +121,39 @@ if st.session_state.step == 1:
 
     st.button("Next", on_click=lambda: go_to_step(2))
 
-# Step 2: Edit Data
+# Step 2: Verify Data
 elif st.session_state.step == 2:
     st.title(step_text())
 
+    valid_time_allocation = True
     for role in st.session_state.selected_roles:
-        st.subheader(f"Role: {role}")
+        st.subheader(role)
         st.session_state.role_data[role]['salary'] = st.number_input(
             "Salary (€)", value=st.session_state.role_data[role]['salary'], key=f"{role}-salary")
 
+        total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
-            cols = st.columns([1, 0.4, 0.4], gap="small")  # Adjust the layout
+            cols = st.columns([1, 0.6, 0.6], gap="small")  # Adjust the layout
             with cols[0]:
                 st.markdown(f"**{task['sub_task']}**")
                 st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
             with cols[1]:
                 task["time_allocation"] = st.number_input(
                     "Time allocation (%)", value=task["time_allocation"], min_value=0, max_value=100, key=f"{role}-{idx}-time_allocation", format="%d")
+                total_time_allocation += task["time_allocation"]
             with cols[2]:
                 task["ai_impact"] = st.number_input(
                     "AI Impact Score", value=task["ai_impact"], min_value=0, max_value=10, key=f"{role}-{idx}-ai_impact", format="%d")
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
+        
+        if total_time_allocation != 100:
+            valid_time_allocation = False
+
+        st.markdown(f"**Total Time Allocation**: {total_time_allocation}%")
+    
+    if not valid_time_allocation:
+        st.error("Total time allocation for each role must be 100%.")
 
     st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
 
@@ -151,40 +162,44 @@ elif st.session_state.step == 2:
     with col2:
         st.button("Back", on_click=lambda: go_to_step(1))
     with col3:
-        st.button("Next", on_click=lambda: go_to_step(3))
+        if valid_time_allocation:
+            st.button("Next", on_click=lambda: go_to_step(3))
 
 # Step 3: Summary
 elif st.session_state.step == 3:
     st.title(step_text())
 
     for role in st.session_state.role_data.keys():
-        st.subheader(f"Role: {role}")
+        st.subheader(role)
         salary = int(st.session_state.role_data[role]['salary'])
         st.markdown(f"**Salary**: €{salary:,.2f}")
 
         table_data = {
-            "Sub-task": [],
             "Description": [],
             "Time Allocation (%)": [],
             "AI Impact": []
         }
 
         for task in st.session_state.role_data[role]['tasks']:
-            table_data["Sub-task"].append(task['sub_task'])
             table_data["Description"].append(task['description'])
             table_data["Time Allocation (%)"].append(task['time_allocation'])
             table_data["AI Impact"].append(task['ai_impact'])
         
         df = pd.DataFrame(table_data)
 
-        # Hide the index and center the columns
+        # Hide the index and fix Description column width
         styled_df = df.style.hide(axis='index').set_table_styles(
             {
+                "Description": [
+                    {'selector': 'th', 'props': [("text-align", "center"), ("width", "250px")],
+                     },
+                    {'selector': 'td', 'props': [("text-align", "center"), ("width", "250px"), ("word-wrap", "break-word")]}
+                ],
                 "Time Allocation (%)": [
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
-                "AI Impact": [
+                "AI Impact (0-10)": [
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
