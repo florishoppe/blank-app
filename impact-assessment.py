@@ -30,10 +30,15 @@ st.markdown(
         text-align: right;
     }
     .remove-button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 38px;
+        margin-top: 10px;
+        padding: 5px 10px;
+        border: none;
+        background-color: #f44336;
+        color: white;
+        cursor: pointer;
+    }
+    .remove-button:hover {
+        background-color: #d32f2f;
     }
     </style>
     """,
@@ -101,6 +106,16 @@ with st.container():
                 cols = st.columns([8, 1])
                 with cols[0]:
                     with st.expander("Role Details", expanded=True):
+                        employees_str = st.text_input(
+                            "Number of employees", 
+                            value=str(st.session_state.role_data[role].get('employees', 1)), 
+                            key=f"{role}-employees"
+                        )
+                        try:
+                            st.session_state.role_data[role]['employees'] = int(employees_str)
+                        except ValueError:
+                            st.error("Please enter a valid number of employees")
+                        
                         salary_str = st.text_input(
                             "Salary (€)", 
                             value=format_currency(st.session_state.role_data[role]['salary']), 
@@ -112,31 +127,17 @@ with st.container():
                             )
                         except ValueError:
                             st.error("Please enter a valid salary amount")
-                        
-                        employees_str = st.text_input(
-                            "Number of employees", 
-                            value=str(st.session_state.role_data[role].get('employees', 1)), 
-                            key=f"{role}-employees"
-                        )
-                        try:
-                            st.session_state.role_data[role]['employees'] = int(employees_str)
-                        except ValueError:
-                            st.error("Please enter a valid number of employees")
+
                 with cols[1]:
                     if st.button("Remove", key=f"remove-{role}", help="Remove role"):
                         remove_role(role)
-                    st.markdown(
-                        """
-                        <div class='remove-button'>
-                        <button>Remove</button>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
         else:
             st.write("No roles selected yet.")
 
-        st.button("Next", on_click=lambda: go_to_step(2))
+        col1, col2 = st.columns([9, 1])
+        with col2:
+            if st.session_state.selected_roles:
+                st.button("Next", on_click=lambda: go_to_step(2))
     
     # Step 2: Verify Data
     elif st.session_state.step == 2:
@@ -255,7 +256,7 @@ with st.container():
 
         st.markdown(f"## Total Cost Saving for the Organization: {format_currency(total_org_cost_saving)}")
 
-        col1, col2 = st.columns([9, 1])
+        col1, col2 = st.columns([8, 1])
         with col2:
             st.button("Back", on_click=lambda: go_to_step(2))
     
