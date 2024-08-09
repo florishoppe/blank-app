@@ -9,6 +9,8 @@ if 'selected_roles' not in st.session_state:
     st.session_state.selected_roles = []
 if 'role_data' not in st.session_state:
     st.session_state.role_data = {}
+if 'select_role' not in st.session_state:
+    st.session_state.select_role = ""
 
 # Function to change steps
 def go_to_step(step):
@@ -58,7 +60,8 @@ def step_text():
     return step_descriptions.get(st.session_state.step)
 
 # Function to add a role
-def add_role(selected_role):
+def add_role():
+    selected_role = st.session_state.select_role
     if selected_role and selected_role not in st.session_state.selected_roles:
         st.session_state.selected_roles.append(selected_role)
         st.session_state.role_data[selected_role] = data[selected_role]
@@ -78,7 +81,7 @@ with st.container():
         st.title(step_text())
 
         available_roles = [role for role in data.keys() if role not in st.session_state.selected_roles]
-        selected_role = st.selectbox("Choose a role to add", [""] + available_roles, key="select-role", on_change=lambda: add_role(st.session_state.select_role))
+        st.selectbox("Choose a role to add", [""] + available_roles, key="select_role", on_change=add_role)
 
         st.markdown("### Selected Roles")
         if st.session_state.selected_roles:
