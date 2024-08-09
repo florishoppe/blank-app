@@ -29,6 +29,12 @@ st.markdown(
     .right-align {
         text-align: right;
     }
+    .remove-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -81,15 +87,52 @@ with st.container():
         st.title(step_text())
 
         available_roles = [role for role in data.keys() if role not in st.session_state.selected_roles]
-        st.selectbox("Choose a role to add", [""] + available_roles, key="select_role", on_change=add_role)
+        st.selectbox(
+            "Choose a role to add", 
+            [""] + available_roles, 
+            key="select_role", 
+            on_change=add_role
+        )
 
         st.markdown("### Selected Roles")
         if st.session_state.selected_roles:
             for role in st.session_state.selected_roles:
+                st.markdown(f"#### {role}")
                 cols = st.columns([8, 1])
-                cols[0].write(role)
-                if cols[1].button("Remove", key=f"remove-{role}"):
-                    remove_role(role)
+                with cols[0]:
+                    with st.expander("Role Details", expanded=True):
+                        salary_str = st.text_input(
+                            "Salary (€)", 
+                            value=format_currency(st.session_state.role_data[role]['salary']), 
+                            key=f"{role}-salary"
+                        )
+                        try:
+                            st.session_state.role_data[role]['salary'] = int(
+                                salary_str.replace("€", "").replace(",", "").replace(".", "")
+                            )
+                        except ValueError:
+                            st.error("Please enter a valid salary amount")
+                        
+                        employees_str = st.text_input(
+                            "Number of employees", 
+                            value=str(st.session_state.role_data[role].get('employees', 1)), 
+                            key=f"{role}-employees"
+                        )
+                        try:
+                            st.session_state.role_data[role]['employees'] = int(employees_str)
+                        except ValueError:
+                            st.error("Please enter a valid number of employees")
+                with cols[1]:
+                    if st.button("Remove", key=f"remove-{role}", help="Remove role"):
+                        remove_role(role)
+                    st.markdown(
+                        """
+                        <div class='remove-button'>
+                        <button>Remove</button>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
         else:
             st.write("No roles selected yet.")
 
@@ -102,25 +145,6 @@ with st.container():
         valid_time_allocation = True
         for role in st.session_state.selected_roles:
             st.subheader(role)
-            
-            cols = st.columns(2)
-            with cols[0]:
-                salary_str = st.text_input(
-                    "Salary (€)", value=format_currency(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
-
-                try:
-                    st.session_state.role_data[role]['salary'] = int(salary_str.replace("€", "").replace(".", "").replace(",", ""))
-                except ValueError:
-                    st.error("Please enter a valid salary amount")
-            
-            with cols[1]:
-                employees_str = st.text_input(
-                    "Number of employees", value=str(st.session_state.role_data[role].get('employees', 1)), key=f"{role}-employees")
-                if employees_str != str(st.session_state.role_data[role].get('employees', 1)):
-                    try:
-                        st.session_state.role_data[role]['employees'] = int(employees_str)
-                    except ValueError:
-                        st.error("Please enter a valid number of employees")
 
             total_time_allocation = 0
             for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
@@ -130,7 +154,8 @@ with st.container():
                     st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
                 with cols[1]:
                     time_allocation_str = st.text_input(
-                        "Time allocation (%)", value=str(task["time_allocation"]), key=f"{role}-{idx}-time_allocation")
+                        "Time allocation (%)", value=str(task["time_allocation"]), key=f"{role}-{idx}-time_allocation"
+                    )
                     try:
                         time_allocation = int(time_allocation_str)
                         total_time_allocation += time_allocation
@@ -141,11 +166,20 @@ with st.container():
 
                 st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
 
-            st.markdown(f"<div class='right-align'><strong>Total Time Allocation:</strong> {total_time_allocation}%</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='right-align'><strong>Total Time Allocation:</strong> {total_time_allocation}%</div>", 
+                unsafe_allow_html=True
+            )
             if total_time_allocation < 100:
-                st.markdown(f"<div class='right-align'><strong>Other:</strong> {100 - total_time_allocation}%</div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div class='right-align'><strong>Other:</strong> {100 - total_time_allocation}%</div>", 
+                    unsafe_allow_html=True
+                )
             elif total_time_allocation > 100:
-                st.markdown(f"<div class='right-align' style='color: red'><strong>Total time allocation exceeds 100%</strong></div>", unsafe_allow_html=True)
+                st.markdown(
+                    f"<div class='right-align' style='color: red'><strong>Total time allocation exceeds 100%</strong></div>", 
+                    unsafe_allow_html=True
+                )
             
             st.markdown("<br><hr><br>", unsafe_allow_html=True)  # Add space and horizontal divider between roles
         
@@ -221,9 +255,7 @@ with st.container():
 
         st.markdown(f"## Total Cost Saving for the Organization: {format_currency(total_org_cost_saving)}")
 
-        col1, col2, col3 = st.columns([6, 1, 1])
-        with col1:
-            st.empty()
+        col1, col2 = st.columns([9, 1])
         with col2:
             st.button("Back", on_click=lambda: go_to_step(2))
     
