@@ -126,12 +126,13 @@ with st.container():
 
                 st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
 
+            st.markdown(f"<div class='right-align'> **Total Time Allocation**: {total_time_allocation}%</div>", unsafe_allow_html=True)
             if total_time_allocation < 100:
-                st.markdown(f"**Other**: {100 - total_time_allocation}%", unsafe_allow_html=True).add_class('right-align')
+                st.markdown(f"<div class='right-align'>**Other**: {100 - total_time_allocation}%</div>", unsafe_allow_html=True)
             elif total_time_allocation > 100:
-                st.error("Total time allocation exceeds 100%")
-
-            st.markdown(f"**Total Time Allocation**: {total_time_allocation}%", unsafe_allow_html=True).add_class('right-align')
+                st.markdown(f"<div class='right-align' style='color: red'> Total time allocation exceeds 100%</div>", unsafe_allow_html=True)
+            
+            st.markdown("<br><hr><br>", unsafe_allow_html=True)  # Add space and horizontal divider between roles
         
         st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
 
@@ -204,7 +205,7 @@ with st.container():
 
             st.dataframe(styled_df)
             st.markdown(f"**Total Cost Saving for {role}**: {format_currency(total_role_cost_saving)}")
-            st.markdown("<br><hr><br>", unsafe_allow_html=True)  # Add space and horizontal divider between roles
+            st.markdown("<br>", unsafe_allow_html=True)  # Add space between roles
 
         st.markdown(f"## Total Cost Saving for the Organization: {format_currency(total_org_cost_saving)}")
 
