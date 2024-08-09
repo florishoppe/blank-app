@@ -10,7 +10,8 @@ data = {
             {"sub_task": "Editing and Proofreading", "time_allocation": 25, "description": "Reviewing and refining content for accuracy.", "ai_impact": 4},
             {"sub_task": "SEO Optimization", "time_allocation": 10, "description": "Enhancing content for search engine visibility.", "ai_impact": 5}
         ],
-        "salary": 50000
+        "salary": 50000,
+        "employees": 1
     },
     "Content Strategist": {
         "tasks": [
@@ -19,7 +20,8 @@ data = {
             {"sub_task": "Content Planning", "time_allocation": 30, "description": "Developing long-term content strategies.", "ai_impact": 4},
             {"sub_task": "Performance Tracking", "time_allocation": 15, "description": "Tracking and measuring content performance.", "ai_impact": 5}
         ],
-        "salary": 60000
+        "salary": 60000,
+        "employees": 1
     },
     "SEO Specialist": {
         "tasks": [
@@ -28,7 +30,8 @@ data = {
             {"sub_task": "Link Building", "time_allocation": 20, "description": "Creating backlinks for better search engine visibility.", "ai_impact": 3},
             {"sub_task": "Performance Analysis", "time_allocation": 25, "description": "Analyzing SEO campaign performance.", "ai_impact": 5}
         ],
-        "salary": 55000
+        "salary": 55000,
+        "employees": 1
     },
     "Graphic Designer": {
         "tasks": [
@@ -37,7 +40,8 @@ data = {
             {"sub_task": "Revisions and Updates", "time_allocation": 20, "description": "Making necessary changes and updates to designs.", "ai_impact": 3},
             {"sub_task": "Asset Management", "time_allocation": 10, "description": "Organizing and managing design assets.", "ai_impact": 3}
         ],
-        "salary": 45000
+        "salary": 45000,
+        "employees": 1
     },
     "Social Media Manager": {
         "tasks": [
@@ -46,7 +50,8 @@ data = {
             {"sub_task": "Analytics and Reporting", "time_allocation": 25, "description": "Tracking social media performance metrics.", "ai_impact": 5},
             {"sub_task": "Campaign Strategy", "time_allocation": 25, "description": "Developing strategies for social media campaigns.", "ai_impact": 4}
         ],
-        "salary": 50000
+        "salary": 50000,
+        "employees": 1
     },
     "Video Producer": {
         "tasks": [
@@ -55,7 +60,8 @@ data = {
             {"sub_task": "Editing and Post-production", "time_allocation": 30, "description": "Editing video content and adding effects.", "ai_impact": 4},
             {"sub_task": "Publishing and Distribution", "time_allocation": 10, "description": "Publishing and distributing video content.", "ai_impact": 5}
         ],
-        "salary": 60000
+        "salary": 60000,
+        "employees": 1
     },
     "Data Analyst": {
         "tasks": [
@@ -64,7 +70,8 @@ data = {
             {"sub_task": "Data Interpretation", "time_allocation": 25, "description": "Interpreting data to provide insights.", "ai_impact": 3},
             {"sub_task": "Reporting Insights", "time_allocation": 20, "description": "Reporting findings and insights from data.", "ai_impact": 4}
         ],
-        "salary": 70000
+        "salary": 70000,
+        "employees": 1
     }
 }
 
@@ -128,18 +135,30 @@ elif st.session_state.step == 2:
     valid_time_allocation = True
     for role in st.session_state.selected_roles:
         st.subheader(role)
-        salary_str = st.text_input(
-            "Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
+        
+        cols = st.columns(2)
+        with cols[0]:
+            salary_str = st.text_input(
+                "Salary (€)", value=str(st.session_state.role_data[role]['salary']), key=f"{role}-salary")
 
-        if salary_str != str(st.session_state.role_data[role]['salary']):
-            try:
-                st.session_state.role_data[role]['salary'] = int(salary_str)
-            except ValueError:
-                st.error("Please enter a valid salary amount")
+            if salary_str != str(st.session_state.role_data[role]['salary']):
+                try:
+                    st.session_state.role_data[role]['salary'] = int(salary_str)
+                except ValueError:
+                    st.error("Please enter a valid salary amount")
+        
+        with cols[1]:
+            employees_str = st.text_input(
+                "Number of employees", value=str(st.session_state.role_data[role].get('employees', 1)), key=f"{role}-employees")
+            if employees_str != str(st.session_state.role_data[role].get('employees', 1)):
+                try:
+                    st.session_state.role_data[role]['employees'] = int(employees_str)
+                except ValueError:
+                    st.error("Please enter a valid number of employees")
 
         total_time_allocation = 0
         for idx, task in enumerate(st.session_state.role_data[role]['tasks']):
-            cols = st.columns([1, 0.6, 0.6])  # Adjust the layout
+            cols = st.columns([1, 1])  # Adjust the layout
             with cols[0]:
                 st.markdown(f"**{task['sub_task']}**")
                 st.markdown(f"*{task['description']}*", unsafe_allow_html=True)
@@ -153,15 +172,6 @@ elif st.session_state.step == 2:
                         task["time_allocation"] = time_allocation
                 except ValueError:
                     st.error("Please enter a valid time allocation percentage")
-            with cols[2]:
-                ai_impact_str = st.text_input(
-                    "AI Impact Score", value=str(task["ai_impact"]), key=f"{role}-{idx}-ai_impact")
-                try:
-                    ai_impact = int(ai_impact_str)
-                    if ai_impact != task["ai_impact"]:
-                        task["ai_impact"] = ai_impact
-                except ValueError:
-                    st.error("Please enter a valid AI impact score")
 
             st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
         
@@ -172,6 +182,8 @@ elif st.session_state.step == 2:
     
     if not valid_time_allocation:
         st.error("Total time allocation for each role must be 100%.")
+
+    st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
 
     # Correctly define and use the columns for navigation buttons
     col1, col2, col3 = st.columns([7, 1, 1])
@@ -185,24 +197,37 @@ elif st.session_state.step == 2:
 elif st.session_state.step == 3:
     st.title(step_text())
 
+    total_org_cost_saving = 0
+
     for role in st.session_state.role_data.keys():
         st.subheader(role)
         salary = int(st.session_state.role_data[role]['salary'])
+        employees = int(st.session_state.role_data[role].get('employees', 1))
         st.markdown(f"**Salary**: €{salary:,.2f}")
+        st.markdown(f"**Number of Employees**: {employees}")
 
         table_data = {
             "Description": [],
             "Time Allocation (%)": [],
-            "AI Impact": []
+            "AI Impact Score (1-5)": [],
+            "Cost Saving (€)": []
         }
+
+        total_role_cost_saving = 0
 
         for task in st.session_state.role_data[role]['tasks']:
             table_data["Description"].append(task['description'])
             table_data["Time Allocation (%)"].append(task['time_allocation'])
-            table_data["AI Impact"].append(task['ai_impact'])
-        
-        df = pd.DataFrame(table_data)
+            table_data["AI Impact Score (1-5)"].append(task['ai_impact'])
 
+            task_cost = salary * (task['time_allocation'] / 100) * employees
+            cost_saving = task_cost * (task['ai_impact'] / 5)
+            table_data["Cost Saving (€)"].append(cost_saving)
+            total_role_cost_saving += cost_saving
+
+        df = pd.DataFrame(table_data)
+        total_org_cost_saving += total_role_cost_saving
+       
         # Hide the index and fix Description column width
         styled_df = df.style.hide(axis='index').set_table_styles(
             {
@@ -214,7 +239,11 @@ elif st.session_state.step == 3:
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
-                "AI Impact": [
+                "AI Impact Score (1-5)": [
+                    {'selector': 'th', 'props': [("text-align", "center")]},
+                    {'selector': 'td', 'props': [("text-align", "center")]}
+                ],
+                "Cost Saving (€)": [
                     {'selector': 'th', 'props': [("text-align", "center")]},
                     {'selector': 'td', 'props': [("text-align", "center")]}
                 ],
@@ -223,9 +252,13 @@ elif st.session_state.step == 3:
                 ]
             }
         )
-        
-        st.dataframe(styled_df)
 
-    col1, col2, col3 = st.columns([7, 1, 1])
+        st.dataframe(styled_df)
+        st.markdown(f"**Total Cost Saving for {role}**: €{total_role_cost_saving:,.2f}")
+        st.markdown("<br>", unsafe_allow_html=True)  # Add space between roles
+
+    st.markdown(f"## Total Cost Saving for the Organization: €{total_org_cost_saving:,.2f}")
+
+    col1, col2, col3 = st.columns([6, 1, 1])
     with col2:
         st.button("Back", on_click=lambda: go_to_step(2))
