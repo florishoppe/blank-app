@@ -13,7 +13,7 @@ if 'role_data' not in st.session_state:
 def go_to_step(step):
     st.session_state.step = step
 
-# Custom CSS to center content
+# Custom CSS to center content and align text to the right
 st.markdown(
     """
     <style>
@@ -22,6 +22,9 @@ st.markdown(
         justify-content: center;
         align-items: center;
         flex-direction: column;
+    }
+    .right-align {
+        text-align: right;
     }
     </style>
     """,
@@ -124,11 +127,11 @@ with st.container():
                 st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
 
             if total_time_allocation < 100:
-                st.markdown(f"**Other**: {100 - total_time_allocation}%")
+                st.markdown(f"**Other**: {100 - total_time_allocation}%", unsafe_allow_html=True).add_class('right-align')
             elif total_time_allocation > 100:
                 st.error("Total time allocation exceeds 100%")
 
-            st.markdown(f"**Total Time Allocation**: {total_time_allocation}%")
+            st.markdown(f"**Total Time Allocation**: {total_time_allocation}%", unsafe_allow_html=True).add_class('right-align')
         
         st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
 
@@ -201,7 +204,7 @@ with st.container():
 
             st.dataframe(styled_df)
             st.markdown(f"**Total Cost Saving for {role}**: {format_currency(total_role_cost_saving)}")
-            st.markdown("<br>", unsafe_allow_html=True)  # Add space between roles
+            st.markdown("<br><hr><br>", unsafe_allow_html=True)  # Add space and horizontal divider between roles
 
         st.markdown(f"## Total Cost Saving for the Organization: {format_currency(total_org_cost_saving)}")
 
