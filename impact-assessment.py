@@ -122,15 +122,14 @@ with st.container():
                         st.error("Please enter a valid time allocation percentage")
 
                 st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
-            
-            if total_time_allocation != 100:
-                valid_time_allocation = False
+
+            if total_time_allocation < 100:
+                st.markdown(f"**Other**: {100 - total_time_allocation}%")
+            elif total_time_allocation > 100:
+                st.error("Total time allocation exceeds 100%")
 
             st.markdown(f"**Total Time Allocation**: {total_time_allocation}%")
         
-        if not valid_time_allocation:
-            st.error("Total time allocation for each role must be 100%.")
-
         st.markdown("<br>", unsafe_allow_html=True)  # Add more space between roles
 
         # Correctly define and use the columns for navigation buttons
@@ -138,7 +137,7 @@ with st.container():
         with col2:
             st.button("Back", on_click=lambda: go_to_step(1))
         with col3:
-            if valid_time_allocation:
+            if valid_time_allocation and total_time_allocation <= 100:
                 st.button("Next", on_click=lambda: go_to_step(3))
 
     # Step 3: Summary
