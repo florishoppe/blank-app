@@ -36,6 +36,7 @@ st.markdown(
         background-color: #f44336;
         color: white;
         cursor: pointer;
+        width: 100px; /* Increase width */
     }
     .remove-button:hover {
         background-color: #d32f2f;
@@ -102,9 +103,9 @@ with st.container():
         st.markdown("### Selected Roles")
         if st.session_state.selected_roles:
             for role in st.session_state.selected_roles:
-                st.markdown(f"#### {role}")
                 cols = st.columns([8, 1])
                 with cols[0]:
+                    st.markdown(f"#### {role}")
                     with st.expander("Role Details", expanded=True):
                         employees_str = st.text_input(
                             "Number of employees", 
