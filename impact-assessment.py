@@ -36,7 +36,7 @@ st.markdown(
         background-color: #f44336;
         color: white;
         cursor: pointer;
-        width: 100px; /* Increase width */
+        width: 150px; /* Increase width */
     }
     .remove-button:hover {
         background-color: #d32f2f;
@@ -103,9 +103,12 @@ with st.container():
         st.markdown("### Selected Roles")
         if st.session_state.selected_roles:
             for role in st.session_state.selected_roles:
-                cols = st.columns([8, 1])
-                with cols[0]:
-                    st.markdown(f"#### {role}")
+                st.markdown(f"#### {role}")
+                cols_inner = st.columns([1, 4])
+                with cols_inner[0]:
+                    if st.button("Remove", key=f"remove-{role}", help="Remove role", class_='remove-button'):
+                        remove_role(role)
+                with cols_inner[1]:
                     with st.expander("Role Details", expanded=True):
                         employees_str = st.text_input(
                             "Number of employees", 
@@ -129,9 +132,6 @@ with st.container():
                         except ValueError:
                             st.error("Please enter a valid salary amount")
 
-                with cols[1]:
-                    if st.button("Remove", key=f"remove-{role}", help="Remove role"):
-                        remove_role(role)
         else:
             st.write("No roles selected yet.")
 
