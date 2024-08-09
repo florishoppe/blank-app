@@ -37,6 +37,9 @@ st.markdown(
         color: white;
         cursor: pointer;
         width: 150px; /* Increase width */
+        display: block;
+        text-align: center;
+        font-size: 16px;
     }
     .remove-button:hover {
         background-color: #d32f2f;
@@ -127,18 +130,7 @@ with st.container():
                     except ValueError:
                         st.error("Please enter a valid salary amount")
 
-                # Use st.markdown to add the Remove button with custom styling
-                st.markdown(
-                    f'''
-                    <form action="/" method="post">
-                        <button type="submit" class="remove-button" name="remove-{role}">Remove</button>
-                    </form>
-                    ''',
-                    unsafe_allow_html=True
-                )
-
-                if st.form_submit_button("remove-{role}"):
-                    remove_role(role)
+                st.button("Remove", key=f"remove-{role}", help="Remove role", on_click=remove_role, args=(role,))
 
         else:
             st.write("No roles selected yet.")
