@@ -126,11 +126,11 @@ with st.container():
 
                 st.markdown("<br>", unsafe_allow_html=True)  # Add space between tasks
 
-            st.markdown(f"<div class='right-align'> **Total Time Allocation**: {total_time_allocation}%</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='right-align'><strong>Total Time Allocation:</strong> {total_time_allocation}%</div>", unsafe_allow_html=True)
             if total_time_allocation < 100:
-                st.markdown(f"<div class='right-align'>**Other**: {100 - total_time_allocation}%</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='right-align'><strong>Other:</strong> {100 - total_time_allocation}%</div>", unsafe_allow_html=True)
             elif total_time_allocation > 100:
-                st.markdown(f"<div class='right-align' style='color: red'> Total time allocation exceeds 100%</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='right-align' style='color: red'><strong>Total time allocation exceeds 100%</strong></div>", unsafe_allow_html=True)
             
             st.markdown("<br><hr><br>", unsafe_allow_html=True)  # Add space and horizontal divider between roles
         
@@ -210,7 +210,10 @@ with st.container():
         st.markdown(f"## Total Cost Saving for the Organization: {format_currency(total_org_cost_saving)}")
 
         col1, col2, col3 = st.columns([6, 1, 1])
+        
+        with col1:
+            # Placeholder column to balance layout
+            st.empty()
         with col2:
             st.button("Back", on_click=lambda: go_to_step(2))
-        
     st.markdown('</div>', unsafe_allow_html=True)
