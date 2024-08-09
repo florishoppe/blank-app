@@ -57,6 +57,18 @@ def step_text():
     }
     return step_descriptions.get(st.session_state.step)
 
+# Function to add a role
+def add_role(selected_role):
+    if selected_role and selected_role not in st.session_state.selected_roles:
+        st.session_state.selected_roles.append(selected_role)
+        st.session_state.role_data[selected_role] = data[selected_role]
+
+# Function to remove a role
+def remove_role(role):
+    if role in st.session_state.selected_roles:
+        st.session_state.selected_roles.remove(role)
+        del st.session_state.role_data[role]
+
 # Main container to center content
 with st.container():
     st.markdown('<div class="center">', unsafe_allow_html=True)
@@ -66,16 +78,15 @@ with st.container():
         st.title(step_text())
 
         available_roles = [role for role in data.keys() if role not in st.session_state.selected_roles]
-        selected_role = st.selectbox("Choose a role to add", available_roles)
-
-        if st.button("Add Role"):
-            st.session_state.selected_roles.append(selected_role)
-            st.session_state.role_data[selected_role] = data[selected_role]
+        selected_role = st.selectbox("Choose a role to add", [""] + available_roles, key="select-role", on_change=lambda: add_role(st.session_state.select_role))
 
         st.markdown("### Selected Roles")
         if st.session_state.selected_roles:
             for role in st.session_state.selected_roles:
-                st.write(role)
+                cols = st.columns([8, 1])
+                cols[0].write(role)
+                if cols[1].button("Remove", key=f"remove-{role}"):
+                    remove_role(role)
         else:
             st.write("No roles selected yet.")
 
