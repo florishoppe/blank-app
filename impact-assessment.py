@@ -36,6 +36,7 @@ st.markdown(
         background-color: #f44336;
         color: white;
         cursor: pointer;
+        width: 150px; /* Increase width */
     }
     .remove-button:hover {
         background-color: #d32f2f;
@@ -104,33 +105,30 @@ with st.container():
             for role in st.session_state.selected_roles:
                 st.markdown(f"#### {role}")
 
-                cols = st.columns([8, 1])
-                with cols[0]:
-                    with st.expander("Role Details", expanded=True):
-                        employees_str = st.text_input(
-                            "Number of employees", 
-                            value=str(st.session_state.role_data[role].get('employees', 1)), 
-                            key=f"{role}-employees"
+                with st.expander("Role Details", expanded=True):
+                    employees_str = st.text_input(
+                        "Number of employees", 
+                        value=str(st.session_state.role_data[role].get('employees', 1)), 
+                        key=f"{role}-employees"
+                    )
+                    try:
+                        st.session_state.role_data[role]['employees'] = int(employees_str)
+                    except ValueError:
+                        st.error("Please enter a valid number of employees")
+                    
+                    salary_str = st.text_input(
+                        "Salary (€)", 
+                        value=format_currency(st.session_state.role_data[role]['salary']), 
+                        key=f"{role}-salary"
+                    )
+                    try:
+                        st.session_state.role_data[role]['salary'] = int(
+                            salary_str.replace("€", "").replace(",", "").replace(".", "")
                         )
-                        try:
-                            st.session_state.role_data[role]['employees'] = int(employees_str)
-                        except ValueError:
-                            st.error("Please enter a valid number of employees")
-                        
-                        salary_str = st.text_input(
-                            "Salary (€)", 
-                            value=format_currency(st.session_state.role_data[role]['salary']), 
-                            key=f"{role}-salary"
-                        )
-                        try:
-                            st.session_state.role_data[role]['salary'] = int(
-                                salary_str.replace("€", "").replace(",", "").replace(".", "")
-                            )
-                        except ValueError:
-                            st.error("Please enter a valid salary amount")
+                    except ValueError:
+                        st.error("Please enter a valid salary amount")
 
-                with cols[1]:
-                    st.button("Remove", key=f"remove-{role}", help="Remove role", on_click=remove_role, args=(role,))
+                st.button("Remove", key=f"remove-{role}", help="Remove role", on_click=remove_role, args=(role,))
 
         else:
             st.write("No roles selected yet.")
